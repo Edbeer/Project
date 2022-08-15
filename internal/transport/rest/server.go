@@ -12,8 +12,10 @@ import (
 	"github.com/Edbeer/Project/config"
 	"github.com/Edbeer/Project/internal/service"
 	"github.com/Edbeer/Project/internal/storage/psql"
+	"github.com/Edbeer/Project/internal/storage/redis"
 	"github.com/Edbeer/Project/internal/transport/rest/api"
 	"github.com/Edbeer/Project/pkg/hash"
+	"github.com/go-redis/redis/v9"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 )
@@ -22,14 +24,16 @@ type Server struct {
 	echo   *echo.Echo
 	config *config.Config
 	psql   *sqlx.DB
+	redis  *redis.Client
 }
 
 // New Server constructor
-func NewServer(config *config.Config, psql *sqlx.DB) *Server {
+func NewServer(config *config.Config, psql *sqlx.DB, redis *redis.Client) *Server {
 	return &Server{
 		echo:   echo.New(),
 		config: config,
 		psql:   psql,
+		redis:  redis,
 	}
 }
 
@@ -40,9 +44,11 @@ func (s *Server) Run() error {
 	hash := hash.NewSHA1Hasher()
 
 	psql := psql.NewStorage(s.psql)
+	redis := redisrepo.NewStorage(s.redis)
 	service := service.NewServices(service.Deps{
 		Config:       s.config,
 		PsqlStorage:  psql,
+		RedisStorage: redis,
 		Hash:         hash,
 	})
 	handlers := api.NewHandlers(api.Deps{

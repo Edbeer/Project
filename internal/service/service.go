@@ -1,8 +1,9 @@
 package service
 
 import (
-	"github.com/Edbeer/Project/internal/storage/psql"
 	"github.com/Edbeer/Project/config"
+	"github.com/Edbeer/Project/internal/storage/psql"
+	"github.com/Edbeer/Project/internal/storage/redis"
 )
 
 // Services
@@ -14,6 +15,7 @@ type Services struct {
 type Deps struct {
 	Config       *config.Config
 	PsqlStorage  *psql.Storage
+	RedisStorage *redisrepo.Storage
 	Hash         PasswordHasher
 }
 

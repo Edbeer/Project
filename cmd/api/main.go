@@ -1,11 +1,13 @@
 package main
 
 import (
-	"github.com/Edbeer/Project/config"
-	server "github.com/Edbeer/Project/internal/transport/rest"
 	"log"
 
+	"github.com/Edbeer/Project/config"
+	server "github.com/Edbeer/Project/internal/transport/rest"
+
 	"github.com/Edbeer/Project/pkg/database/postgres"
+	"github.com/Edbeer/Project/pkg/database/redis"
 )
 
 func main() {
@@ -20,8 +22,12 @@ func main() {
 	}
 	defer psqlClient.Close()
 
-
-	s := server.NewServer(config, psqlClient)
+	// redis
+	redisClient := redis.NewRedisClient(config)
+	defer redisClient.Close()
+	log.Println("Redis connetcted")
+	
+	s := server.NewServer(config, psqlClient, redisClient)
 	if err := s.Run(); err != nil {
 		log.Fatal(err)
 	}
