@@ -17,11 +17,17 @@ type User struct {
 	Created_at time.Time `json:"created_at" db:"created_at"`
 }
 
+// User with token
+type UserWithToken struct {
+	User        *User  `json:"user"`
+	AccessToken string `json:"access_token"`
+}
+
 // Input User
 type InputUser struct {
-	Name       string  
-	Email      string   
-	Password   string   
+	Name     string
+	Email    string
+	Password string
 }
 
 // Compare user password and payload
