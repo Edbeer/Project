@@ -56,7 +56,7 @@ func (h *Handlers) initApi(e *echo.Echo) {
 	{
 		user := api.Group("/user")
 		{
-			user.POST("/create", h.user.Create())
+			user.POST("/create", h.user.SignUp())
 		}
 	}
 }
