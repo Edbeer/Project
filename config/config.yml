@@ -1,0 +1,32 @@
+server:
+  Port: :8080
+  Mode: DEVELOPMENT
+  JwtSecretKey: secretkey
+  ReadTimeout: 10
+  WriteTimeout: 10
+  SSL: false
+
+postgres:
+  PostgresqlHost: localhost
+  PostgresqlPort: 5432
+  PostgresqlUser: pasha
+  PostgresqlPassword: postgres
+  PostgresqlDbname: app
+  PostgresqlSSLMode: false
+  PgDriver: pgx
+
+redis:
+  RedisAddr: localhost:6379
+  RedisPassword:
+  RedisDb: 0
+  RedisDefaultdb: 0
+  MinIdleConns: 200
+  PoolSize: 12000
+  PoolTimeout: 240
+  Password: ""
+  DB: 0
+
+session:
+  Name: session-id
+  Prefix: api-session
+  Expire: 3600
