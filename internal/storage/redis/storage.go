@@ -1,14 +1,21 @@
 package redisrepo
 
-import "github.com/go-redis/redis/v9"
+import (
+	"github.com/go-redis/redis/v9"
+)
 
-// Storage psql
+type Deps struct {
+	Redis *redis.Client
+	Manager Manager
+}
+
+// Storage redis
 type Storage struct {
 	Session *SessionStorage
 }
 
-func NewStorage(redis *redis.Client) *Storage {
+func NewStorage(deps Deps) *Storage {
 	return &Storage{
-		Session: newSessionStorage(redis),
+		Session: newSessionStorage(deps.Redis, deps.Manager),
 	}
 }

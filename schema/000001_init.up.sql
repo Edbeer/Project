@@ -9,5 +9,5 @@ CREATE TABLE users
     name   VARCHAR(32)                       NOT NULL check ( name <> '' ),
     email        VARCHAR(64)                 NOT NULL check ( email <> '' ),
     password     VARCHAR(250)                NOT NULL CHECK ( octet_length(password) <> 0 ),
-    updated_at   TIMESTAMP                   DEFAULT current_timestamp
+      created_at   TIMESTAMP                 NOT NULL DEFAULT now()
 );

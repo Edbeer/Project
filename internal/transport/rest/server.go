@@ -15,6 +15,7 @@ import (
 	"github.com/Edbeer/Project/internal/storage/redis"
 	"github.com/Edbeer/Project/internal/transport/rest/api"
 	"github.com/Edbeer/Project/pkg/hash"
+	"github.com/Edbeer/Project/pkg/jwt"
 	"github.com/go-redis/redis/v9"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
@@ -39,21 +40,28 @@ func NewServer(config *config.Config, psql *sqlx.DB, redis *redis.Client) *Serve
 
 func (s *Server) Run() error {
 	// Services, Repos & API Handlers
-	config := config.GetConfig()
-
 	hash := hash.NewSHA1Hasher()
 
+	tokenManager, err := jwt.NewManager(s.config.Server.JwtSecretKey)
+	if err != nil {
+		return err
+	}
 	psql := psql.NewStorage(s.psql)
-	redis := redisrepo.NewStorage(s.redis)
+	redis := redisrepo.NewStorage(redisrepo.Deps{
+		Redis: s.redis,
+		Manager: tokenManager,
+	})
 	service := service.NewServices(service.Deps{
 		Config:       s.config,
 		PsqlStorage:  psql,
 		RedisStorage: redis,
 		Hash:         hash,
+		TokenManager: tokenManager,
 	})
 	handlers := api.NewHandlers(api.Deps{
-		UserService: service.User,
-		Config:      config,
+		UserService:    service.User,
+		SessionService: service.Session,
+		Config:         s.config,
 	})
 	if err := handlers.Init(s.echo); err != nil {
 		log.Fatal(err)

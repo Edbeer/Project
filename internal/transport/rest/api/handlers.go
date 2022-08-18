@@ -8,6 +8,7 @@ import (
 // Dependencies
 type Deps struct {
 	UserService UserService
+	SessionService SessionService
 	Config      *config.Config
 }
 
@@ -19,7 +20,7 @@ type Handlers struct {
 // New handlers constructor
 func NewHandlers(deps Deps) *Handlers {
 	return &Handlers{
-		user: NewUserHandler(deps.Config, deps.UserService),
+		user: NewUserHandler(deps.Config, deps.UserService, deps.SessionService),
 	}
 }
 
@@ -56,7 +57,8 @@ func (h *Handlers) initApi(e *echo.Echo) {
 	{
 		user := api.Group("/user")
 		{
-			user.POST("/create", h.user.SignUp())
+			user.POST("/sign-up", h.user.SignUp())
+			user.POST("/sign-in", h.user.SignIn())
 		}
 	}
 }

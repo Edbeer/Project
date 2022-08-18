@@ -2,7 +2,9 @@ package utils
 
 import (
 	"context"
+	"net/http"
 
+	"github.com/Edbeer/Project/config"
 	"github.com/labstack/echo/v4"
 )
 
@@ -30,4 +32,20 @@ func ReadRequest(ctx echo.Context, request interface{}) error {
 		return err
 	}
 	return validate.StructCtx(ctx.Request().Context(), request)
+}
+
+// Configure JWT cookie
+func ConfigureJWTCookie(cfg *config.Config, jwtToken string) *http.Cookie {
+	return &http.Cookie{
+		Name:       cfg.Cookie.Name,
+		Value:      jwtToken,
+		Path:       "/",
+		// Domain:     "/",
+		RawExpires: "",
+		MaxAge:     cfg.Cookie.MaxAge,
+		Secure:     cfg.Cookie.Secure,
+		// it is better to keep jwtokens on httpOnly from XSS attacks
+		HttpOnly:   cfg.Cookie.HTTPOnly, // true
+		SameSite:   0,
+	}
 }

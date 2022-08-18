@@ -30,3 +30,9 @@ session:
   Name: session-id
   Prefix: api-session
   Expire: 3600
+
+cookie:
+  Name: jwt-token
+  MaxAge: 86400
+  Secure: false
+  HTTPOnly: true
