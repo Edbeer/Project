@@ -5,11 +5,13 @@ import (
 
 	"github.com/Edbeer/Project/config"
 	"github.com/Edbeer/Project/internal/entity"
+	"github.com/google/uuid"
 )
 
 
 type SessionStorage interface {
 	CreateSession(ctx context.Context, session *entity.Session, expire int) (string, error)
+	GetUserID(ctx context.Context, refreshToken string) (uuid.UUID, error)
 }
 
 // User service
@@ -28,4 +30,8 @@ func NewSessionService(config *config.Config, session SessionStorage) *SessionSe
 
 func (s *SessionService) CreateSession(ctx context.Context, session *entity.Session, expire int) (string, error) {
 	return s.session.CreateSession(ctx, session, expire)
+}
+
+func (s *SessionService) GetUserID(ctx context.Context, refreshToken string) (uuid.UUID, error) {
+	return s.session.GetUserID(ctx, refreshToken)
 }

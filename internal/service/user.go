@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Edbeer/Project/pkg/utils"
+	"github.com/google/uuid"
 
 	"github.com/Edbeer/Project/internal/entity"
 
@@ -21,6 +22,7 @@ type Manager interface {
 type UserPsql interface {
 	Create(ctx context.Context, user *entity.User) (*entity.User, error)
 	FindUserByEmail(ctx context.Context, user *entity.User) (*entity.User, error)
+	GetUserByID(ctx context.Context, userID uuid.UUID) (*entity.User, error)
 }
 
 // PasswordHasher provides hashing logic to securely store passwords
@@ -28,30 +30,30 @@ type PasswordHasher interface {
 	Hash(password string) string
 }
 
-
 // User service
 type UserService struct {
-	config *config.Config
-	psql   UserPsql
-	hash PasswordHasher
+	config       *config.Config
+	psql         UserPsql
+	hash         PasswordHasher
 	tokenManager Manager
 }
 
 // New user service constructor
 func NewUserService(config *config.Config, psql UserPsql, hash PasswordHasher, tokenManager Manager) *UserService {
 	return &UserService{
-		config: config,
-		psql:   psql,
-		hash: hash,
+		config:       config,
+		psql:         psql,
+		hash:         hash,
 		tokenManager: tokenManager,
 	}
 }
 
-func (u *UserService) SignUp(ctx context.Context, input *entity.InputUser) (*entity.UserWithToken, error) {	
+// Sign-up user
+func (u *UserService) SignUp(ctx context.Context, input *entity.InputUser) (*entity.UserWithToken, error) {
 	user := &entity.User{
-		Name: input.Name,
+		Name:     input.Name,
 		Password: u.hash.Hash(input.Password),
-		Email: input.Email,
+		Email:    input.Email,
 	}
 
 	if err := user.PrepareCreate(); err != nil {
@@ -76,13 +78,14 @@ func (u *UserService) SignUp(ctx context.Context, input *entity.InputUser) (*ent
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &entity.UserWithToken{
-		User:  createdUser,
+		User:        createdUser,
 		AccessToken: accessToken,
 	}, nil
 }
 
+// Sign-in user
 func (u *UserService) SignIn(ctx context.Context, user *entity.User) (*entity.UserWithToken, error) {
 	foundUser, err := u.psql.FindUserByEmail(ctx, user)
 	if err != nil {
@@ -93,9 +96,27 @@ func (u *UserService) SignIn(ctx context.Context, user *entity.User) (*entity.Us
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &entity.UserWithToken{
-		User:  foundUser,
+		User:        foundUser,
+		AccessToken: accessToken,
+	}, nil
+}
+
+// Get user by id
+func (u *UserService) GetUserByID(ctx context.Context, userId uuid.UUID) (*entity.UserWithToken, error) {
+	foundUser, err := u.psql.GetUserByID(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, err := u.tokenManager.GenerateJWTToken(foundUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return &entity.UserWithToken{
+		User:        foundUser,
 		AccessToken: accessToken,
 	}, nil
 }

@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/Edbeer/Project/internal/entity"
-	"github.com/pkg/errors"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
 
 // User psql storage
@@ -35,11 +36,24 @@ func (r *UserStorage) Create(ctx context.Context, user *entity.User) (*entity.Us
 // Find user by email
 func (r *UserStorage) FindUserByEmail(ctx context.Context, user *entity.User) (*entity.User, error) {
 	foundUser := &entity.User{}
-	query := `SELECT name, email, password, created_at
+	query := `SELECT user_id, name, email, password, created_at
 			FROM users
 			WHERE email = $1`
 	if err := r.psql.QueryRowxContext(ctx, query, user.Email).StructScan(foundUser); err != nil {
 		return nil, errors.Wrap(err, "UserStoragePsql.FindUserByEmail.StructScan")
 	}
 	return foundUser, nil
+}
+
+// Get user by id
+func (r *UserStorage) GetUserByID(ctx context.Context, userID uuid.UUID) (*entity.User, error) {
+	u := &entity.User{}
+	query := `SELECT user_id, name, email, password, created_at
+		FROM users
+		WHERE user_id = $1`
+	if err := r.psql.QueryRowxContext(ctx, query, userID).StructScan(u); err != nil {
+		return nil, errors.Wrap(err, "AuthStoragePsql.GetUserByID.StructScan")
+	}
+
+	return u, nil
 }

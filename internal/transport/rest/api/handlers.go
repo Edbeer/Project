@@ -59,6 +59,7 @@ func (h *Handlers) initApi(e *echo.Echo) {
 		{
 			user.POST("/sign-up", h.user.SignUp())
 			user.POST("/sign-in", h.user.SignIn())
+			user.POST("/auth/refresh", h.user.RefreshTokens())
 		}
 	}
 }

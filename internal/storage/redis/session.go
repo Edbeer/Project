@@ -3,10 +3,10 @@ package redisrepo
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/Edbeer/Project/internal/entity"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/go-redis/redis/v9"
@@ -34,19 +34,28 @@ func newSessionStorage(redis *redis.Client, manager Manager) *SessionStorage {
 func (s *SessionStorage) CreateSession(ctx context.Context, session *entity.Session, expire int) (string, error) {
 
 	session.RefreshToken = s.manager.NewRefreshToken()
-	key := s.createKey(session.RefreshToken)
 
 	sessionBytes, err := json.Marshal(&session)
 	if err != nil {
 		return "", errors.Wrap(err, "SessionStorage.CreateSession.Marshal")
 	}
-	if err := s.redis.Set(ctx, key, sessionBytes, time.Second*time.Duration(expire)).Err(); err != nil {
+	if err := s.redis.Set(ctx, session.RefreshToken, sessionBytes, time.Second*time.Duration(expire)).Err(); err != nil {
 		return "", errors.Wrap(err, "SessionStorage.CreateSession.Set")
 	}
 
 	return session.RefreshToken, nil
 }
 
-func (s *SessionStorage) createKey(refreshToken string) string {
-	return fmt.Sprintf("session: %s", refreshToken)
+// Get user id from session
+func (s *SessionStorage) GetUserID(ctx context.Context, refreshToken string) (uuid.UUID, error) {
+	sessionBytes, err := s.redis.Get(ctx, refreshToken).Bytes()
+	if err != nil {
+		return uuid.Nil , errors.Wrap(err, "SessionStorage.GetUserID.Get")
+	}
+	session := &entity.Session{}
+	if err = json.Unmarshal(sessionBytes, session); err != nil {
+		return uuid.Nil, errors.Wrap(err, "SessionStorage.GetSessionByID.Get")
+	}
+
+	return session.UserID, nil
 }

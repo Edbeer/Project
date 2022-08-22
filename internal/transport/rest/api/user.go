@@ -6,18 +6,23 @@ import (
 
 	"github.com/Edbeer/Project/internal/entity"
 	"github.com/Edbeer/Project/pkg/utils"
+	"github.com/google/uuid"
 
 	"github.com/Edbeer/Project/config"
 	"github.com/labstack/echo/v4"
 )
 
+// User service interface
 type UserService interface {
 	SignUp(ctx context.Context, input *entity.InputUser) (*entity.UserWithToken, error)
 	SignIn(ctx context.Context, user *entity.User) (*entity.UserWithToken, error)
+	GetUserByID(ctx context.Context, userID uuid.UUID) (*entity.UserWithToken, error)
 }
 
+// Session service interface
 type SessionService interface {
 	CreateSession(ctx context.Context, session *entity.Session, expire int) (string, error)
+	GetUserID(ctx context.Context, refreshToken string) (uuid.UUID, error)
 }
 
 // User handler
@@ -102,5 +107,46 @@ func (h *UserHandler) SignIn() echo.HandlerFunc {
 
 		c.SetCookie(utils.ConfigureJWTCookie(h.config, refreshToken))
 		return c.JSON(http.StatusOK, userWithToken)
+	}
+}
+
+// Update tokens
+func (h *UserHandler) RefreshTokens() echo.HandlerFunc {
+	type RefreshToken struct {
+		Token string `json:"refresh_token" redis:"refresh_token" binding:"required"`
+	}
+	type tokenResponse struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	return func(c echo.Context) error {
+		ctx := utils.GetRequestCtx(c)
+
+		token := &RefreshToken{}
+		if err := utils.ReadRequest(c, token); err != nil {
+			return c.JSON(http.StatusBadRequest, "400")
+		}
+		uuid, err := h.session.GetUserID(ctx, token.Token)
+		if err != nil {
+			return c.JSON(http.StatusNoContent, "uid")
+		}
+		
+		user, err := h.user.GetUserByID(ctx, uuid)
+		if err != nil {
+			return c.JSON(http.StatusNoContent, "204")
+		}
+
+		refreshToken, err := h.session.CreateSession(ctx, &entity.Session{
+			UserID: user.User.ID,
+		}, h.config.Cookie.MaxAge)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, "500")
+		}
+
+		c.SetCookie(utils.ConfigureJWTCookie(h.config, refreshToken))
+		return c.JSON(http.StatusOK, tokenResponse{
+			AccessToken: user.AccessToken,
+			RefreshToken: refreshToken,
+		})
 	}
 }
