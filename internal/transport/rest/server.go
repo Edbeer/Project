@@ -16,6 +16,7 @@ import (
 	"github.com/Edbeer/Project/internal/transport/rest/api"
 	"github.com/Edbeer/Project/pkg/hash"
 	"github.com/Edbeer/Project/pkg/jwt"
+	"github.com/Edbeer/Project/pkg/logger"
 	"github.com/go-redis/redis/v9"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
@@ -26,15 +27,17 @@ type Server struct {
 	config *config.Config
 	psql   *sqlx.DB
 	redis  *redis.Client
+	logger  logger.Logger
 }
 
 // New Server constructor
-func NewServer(config *config.Config, psql *sqlx.DB, redis *redis.Client) *Server {
+func NewServer(config *config.Config, psql *sqlx.DB, redis *redis.Client, logger logger.Logger) *Server {
 	return &Server{
 		echo:   echo.New(),
 		config: config,
 		psql:   psql,
 		redis:  redis,
+		logger: logger,
 	}
 }
 
@@ -75,8 +78,10 @@ func (s *Server) Run() error {
 	}
 
 	go func() {
+		s.logger.Infof("Server is listening on port: %s", s.config.Server.Port)
 		if err := s.echo.StartServer(server); err != nil {
-			log.Fatalf("Error starting Server: %v", err)
+			s.logger.Fatalf("Error starting Server: %v", err)
+
 		}
 	}()
 
@@ -89,5 +94,6 @@ func (s *Server) Run() error {
 	ctx, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdown()
 
+	s.logger.Info("Server Exited Properly")
 	return s.echo.Server.Shutdown(ctx)
 }

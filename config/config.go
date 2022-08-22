@@ -14,6 +14,7 @@ type Config struct {
 	Redis    Redis    `yaml:"redis"`
 	Session  Session  `yaml:"session"`
 	Cookie   Cookie   `yaml:"cookie"`
+	Logger   Logger   `yaml:"logger"`
 }
 
 // Server config struct
@@ -63,6 +64,15 @@ type Cookie struct {
 	MaxAge   int    `yaml:"MaxAge"`
 	Secure   bool   `yaml:"Secure"`
 	HTTPOnly bool   `yaml:"HTTPOnly"`
+}
+
+// Logger config
+type Logger struct {
+	Development       bool   `yaml:"Development"`
+	DisableCaller     bool   `yaml:"DisableCaller"`
+	DisableStacktrace bool   `yaml:"DisableStacktrace"`
+	Encoding          string `yaml:"Encoding"`
+	Level             string `yaml:"Level"`
 }
 
 var (

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Edbeer/Project/internal/entity"
+	"github.com/Edbeer/Project/pkg/httpe"
 	"github.com/Edbeer/Project/pkg/utils"
 	"github.com/google/uuid"
 
@@ -52,7 +53,7 @@ func (h *UserHandler) SignUp() echo.HandlerFunc {
 
 		user := &inputUser{}
 		if err := utils.ReadRequest(c, user); err != nil {
-			return c.JSON(http.StatusBadRequest, "400")
+			return c.JSON(httpe.ErrorResponse(err))
 		}
 
 		createdUser, err := h.user.SignUp(ctx, &entity.InputUser{
@@ -61,7 +62,7 @@ func (h *UserHandler) SignUp() echo.HandlerFunc {
 			Password: user.Password,
 		})
 		if err != nil {
-			return c.JSON(http.StatusNoContent, "204")
+			return c.JSON(httpe.ParseErrors(err).Status(), httpe.ParseErrors(err))
 		}
 
 		// TODO 
@@ -69,7 +70,7 @@ func (h *UserHandler) SignUp() echo.HandlerFunc {
 			UserID: createdUser.User.ID,
 		}, h.config.Session.Expire)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, "500")
+			return c.JSON(httpe.ErrorResponse(err))
 		}
 
 		c.SetCookie(utils.ConfigureJWTCookie(h.config, refreshToken))
@@ -88,21 +89,21 @@ func (h *UserHandler) SignIn() echo.HandlerFunc {
 
 		login := &Login{}
 		if err := utils.ReadRequest(c, login); err != nil {
-			return c.JSON(http.StatusBadRequest, "400")
+			return c.JSON(httpe.ErrorResponse(err))
 		}
 		userWithToken, err := h.user.SignIn(ctx, &entity.User{
 			Email:    login.Email,
 			Password: login.Password,
 		})
 		if err != nil {
-			return c.JSON(http.StatusNoContent, "204")
+			return c.JSON(httpe.ErrorResponse(err))
 		}
 
 		refreshToken, err := h.session.CreateSession(ctx, &entity.Session{
 			UserID: userWithToken.User.ID,
 		}, h.config.Cookie.MaxAge)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, "500")
+			return c.JSON(httpe.ErrorResponse(err))
 		}
 
 		c.SetCookie(utils.ConfigureJWTCookie(h.config, refreshToken))
@@ -124,23 +125,23 @@ func (h *UserHandler) RefreshTokens() echo.HandlerFunc {
 
 		token := &RefreshToken{}
 		if err := utils.ReadRequest(c, token); err != nil {
-			return c.JSON(http.StatusBadRequest, "400")
+			return c.JSON(httpe.ErrorResponse(err))
 		}
 		uuid, err := h.session.GetUserID(ctx, token.Token)
 		if err != nil {
-			return c.JSON(http.StatusNoContent, "uid")
+			return c.JSON(httpe.ErrorResponse(err))
 		}
 		
 		user, err := h.user.GetUserByID(ctx, uuid)
 		if err != nil {
-			return c.JSON(http.StatusNoContent, "204")
+			return c.JSON(httpe.ErrorResponse(err))
 		}
 
 		refreshToken, err := h.session.CreateSession(ctx, &entity.Session{
 			UserID: user.User.ID,
 		}, h.config.Cookie.MaxAge)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, "500")
+			return c.JSON(httpe.ErrorResponse(err))
 		}
 
 		c.SetCookie(utils.ConfigureJWTCookie(h.config, refreshToken))
