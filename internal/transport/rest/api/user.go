@@ -2,9 +2,11 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/Edbeer/Project/internal/entity"
+	"github.com/Edbeer/Project/internal/transport/rest/middlewares"
 	"github.com/Edbeer/Project/pkg/httpe"
 	"github.com/Edbeer/Project/pkg/utils"
 	"github.com/google/uuid"
@@ -24,7 +26,20 @@ type UserService interface {
 type SessionService interface {
 	CreateSession(ctx context.Context, session *entity.Session, expire int) (string, error)
 	GetUserID(ctx context.Context, refreshToken string) (uuid.UUID, error)
+	DeleteSession(ctx context.Context, refreshToken string) error
 }
+
+// init user handlers
+func (h *Handlers) initUserHandlers(api *echo.Group, mw *middlewares.MiddlewareManager) {
+	user := api.Group("/user")
+	{
+		user.POST("/sign-up", h.user.SignUp())
+		user.POST("/sign-in", h.user.SignIn())
+		user.POST("/auth/refresh", h.user.RefreshTokens())
+		user.Use(mw.AuthJWTMiddleware())
+		user.POST("/sign-out", h.user.SignOut())
+	}
+} 
 
 // User handler
 type UserHandler struct {
@@ -42,6 +57,7 @@ func NewUserHandler(config *config.Config, user UserService, session SessionServ
 	}
 }
 
+// SignUp
 func (h *UserHandler) SignUp() echo.HandlerFunc {
 	type inputUser struct {
 		Name     string `json:"name" db:"name" validate:"required_with,lte=30"`
@@ -79,6 +95,7 @@ func (h *UserHandler) SignUp() echo.HandlerFunc {
 	}
 }
 
+// SignIn
 func (h *UserHandler) SignIn() echo.HandlerFunc {
 	type Login struct {
 		Email    string `json:"email" db:"email" validate:"omitempty,lte=60,email"`
@@ -149,5 +166,25 @@ func (h *UserHandler) RefreshTokens() echo.HandlerFunc {
 			AccessToken: user.AccessToken,
 			RefreshToken: refreshToken,
 		})
+	}
+}
+
+func (u *UserHandler) SignOut() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		ctx := utils.GetRequestCtx(c)
+
+		cookie, err := c.Cookie("jwt-token")
+		if err != nil {
+			if errors.Is(err, http.ErrNoCookie) {
+				return c.JSON(http.StatusUnauthorized, httpe.NewUnauthorizedError(err))
+			}
+			return c.JSON(http.StatusInternalServerError, httpe.NewInternalServerError(err))
+		}
+		if err = u.session.DeleteSession(ctx, cookie.Value); err != nil {
+			return c.JSON(httpe.ErrorResponse(err))
+		}
+		utils.DeleteCookie(c, u.config.Cookie.Name)
+
+		return c.NoContent(http.StatusOK)
 	}
 }

@@ -49,3 +49,12 @@ func ConfigureJWTCookie(cfg *config.Config, jwtToken string) *http.Cookie {
 		SameSite:   0,
 	}
 }
+
+func DeleteCookie(c echo.Context, cookieName string) {
+	c.SetCookie(&http.Cookie{
+		Name:   cookieName,
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	})
+}

@@ -66,7 +66,7 @@ func (s *Server) Run() error {
 		SessionService: service.Session,
 		Config:         s.config,
 	})
-	if err := handlers.Init(s.echo); err != nil {
+	if err := handlers.Init(s.echo, s.logger); err != nil {
 		log.Fatal(err)
 	}
 

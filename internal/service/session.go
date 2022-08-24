@@ -8,10 +8,11 @@ import (
 	"github.com/google/uuid"
 )
 
-
+// Session storage interface
 type SessionStorage interface {
 	CreateSession(ctx context.Context, session *entity.Session, expire int) (string, error)
 	GetUserID(ctx context.Context, refreshToken string) (uuid.UUID, error)
+	DeleteSession(ctx context.Context, refreshToken string) error
 }
 
 // User service
@@ -34,4 +35,8 @@ func (s *SessionService) CreateSession(ctx context.Context, session *entity.Sess
 
 func (s *SessionService) GetUserID(ctx context.Context, refreshToken string) (uuid.UUID, error) {
 	return s.session.GetUserID(ctx, refreshToken)
+}
+
+func (s *SessionService) DeleteSession(ctx context.Context, refreshToken string) error {
+	return s.session.DeleteSession(ctx, refreshToken)
 }

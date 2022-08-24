@@ -1,15 +1,18 @@
 package api
 
 import (
+	"github.com/Edbeer/Project/config"
+	"github.com/Edbeer/Project/internal/transport/rest/middlewares"
+	"github.com/Edbeer/Project/pkg/logger"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/Edbeer/Project/config"
 )
+
 // Dependencies
 type Deps struct {
-	UserService UserService
+	UserService    UserService
 	SessionService SessionService
-	Config      *config.Config
+	Config         *config.Config
 }
 
 // Handlers
@@ -24,7 +27,7 @@ func NewHandlers(deps Deps) *Handlers {
 	}
 }
 
-func (h *Handlers) Init(e *echo.Echo) error {
+func (h *Handlers) Init(e *echo.Echo, logger logger.Logger) error {
 	config := config.GetConfig()
 	if config.Server.SSL {
 		e.Pre(middleware.HTTPSRedirect())
@@ -47,19 +50,22 @@ func (h *Handlers) Init(e *echo.Echo) error {
 	e.Use(middleware.Secure())
 	e.Use(middleware.BodyLimit("2M"))
 
-	h.initApi(e)
+	// Middleware Manager
+	mw := middlewares.NewMiddlewareManager(
+		h.user.session,
+		h.user.user,
+		h.user.config,
+		[]string{"*"},
+		logger,
+	)
+	h.initApi(e, mw)
 
 	return nil
 }
 
-func (h *Handlers) initApi(e *echo.Echo) {
+func (h *Handlers) initApi(e *echo.Echo, mw *middlewares.MiddlewareManager) {
 	api := e.Group("/api")
 	{
-		user := api.Group("/user")
-		{
-			user.POST("/sign-up", h.user.SignUp())
-			user.POST("/sign-in", h.user.SignIn())
-			user.POST("/auth/refresh", h.user.RefreshTokens())
-		}
+		h.initUserHandlers(api, mw)
 	}
 }

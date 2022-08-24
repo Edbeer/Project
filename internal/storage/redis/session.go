@@ -59,3 +59,11 @@ func (s *SessionStorage) GetUserID(ctx context.Context, refreshToken string) (uu
 
 	return session.UserID, nil
 }
+
+// Delete session cookie
+func (s *SessionStorage) DeleteSession(ctx context.Context, refreshToken string) error {
+	if err := s.redis.Del(ctx, refreshToken).Err(); err != nil {
+		return errors.Wrap(err, "SessionStorage.DeleteSession.Del")
+	}
+	return nil
+}
