@@ -38,6 +38,7 @@ func (h *Handlers) initUserHandlers(api *echo.Group, mw *middlewares.MiddlewareM
 		user.POST("/auth/refresh", h.user.RefreshTokens())
 		user.Use(mw.AuthJWTMiddleware())
 		user.POST("/sign-out", h.user.SignOut())
+		user.GET("/me", h.user.GetMe())
 	}
 } 
 
@@ -186,5 +187,16 @@ func (u *UserHandler) SignOut() echo.HandlerFunc {
 		utils.DeleteCookie(c, u.config.Cookie.Name)
 
 		return c.NoContent(http.StatusOK)
+	}
+}
+
+func (u *UserHandler) GetMe() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user, ok := c.Get("user").(*entity.User)
+		if !ok {
+			httpe.NewUnauthorizedError(httpe.Unauthorized)
+		}
+
+		return c.JSON(http.StatusOK, user)
 	}
 }
