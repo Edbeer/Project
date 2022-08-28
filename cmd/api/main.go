@@ -36,7 +36,7 @@ func main() {
 	logger.Info("Redis connetcted")
 	
 	jaegerCfgInstance := jConfig.Configuration{
-		ServiceName: config.Jaeger.ServiceName,
+		ServiceName: "REST_API",
 		Sampler: &jConfig.SamplerConfig{
 			Type:  jaeger.SamplerTypeConst,
 			Param: 1,

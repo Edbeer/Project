@@ -3,6 +3,8 @@ package redisrepo
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/Edbeer/Project/internal/entity"
@@ -13,21 +15,15 @@ import (
 	"github.com/go-redis/redis/v9"
 )
 
-type Manager interface {
-	NewRefreshToken() string
-}
-
 // Session redis storage
 type SessionStorage struct {
 	redis   *redis.Client
-	manager Manager
 }
 
 // Session storage constructor
-func newSessionStorage(redis *redis.Client, manager Manager) *SessionStorage {
+func newSessionStorage(redis *redis.Client) *SessionStorage {
 	return &SessionStorage{
 		redis:   redis,
-		manager: manager,
 	}
 }
 
@@ -36,7 +32,7 @@ func (s *SessionStorage) CreateSession(ctx context.Context, session *entity.Sess
 	span, ctx := opentracing.StartSpanFromContext(ctx, "SessionRedis.CreateSession")
 	defer span.Finish()
 
-	session.RefreshToken = s.manager.NewRefreshToken()
+	session.RefreshToken = newRefreshToken()
 
 	sessionBytes, err := json.Marshal(&session)
 	if err != nil {
@@ -74,4 +70,18 @@ func (s *SessionStorage) DeleteSession(ctx context.Context, refreshToken string)
 		return errors.Wrap(err, "SessionStorage.DeleteSession.Del")
 	}
 	return nil
+}
+
+func newRefreshToken() string {
+	b := make([]byte, 32)
+
+	s := rand.NewSource(time.Now().Unix())
+	r := rand.New(s)
+
+	_, err := r.Read(b)
+	if err != nil {
+		return ""
+	}
+
+	return fmt.Sprintf("%x", b)
 }

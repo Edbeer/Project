@@ -11,7 +11,7 @@ import (
 
 // User service interface
 type UserService interface {
-	SignUp(ctx context.Context, input *entity.InputUser) (*entity.UserWithToken, error)
+	SignUp(ctx context.Context, input *entity.User) (*entity.UserWithToken, error)
 	SignIn(ctx context.Context, user *entity.User) (*entity.UserWithToken, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*entity.UserWithToken, error)
 }

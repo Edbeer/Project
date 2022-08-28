@@ -17,13 +17,12 @@ type Deps struct {
 	Config       *config.Config
 	PsqlStorage  *psql.Storage
 	RedisStorage *redisrepo.Storage
-	Hash         PasswordHasher
 	TokenManager Manager
 }
 
 // New services constructor
 func NewServices(deps Deps) *Services {
-	userService := NewUserService(deps.Config, deps.PsqlStorage.User, deps.Hash, deps.TokenManager)
+	userService := newUserService(deps.Config, deps.PsqlStorage.User, deps.TokenManager)
 	sessionService := NewSessionService(deps.Config, deps.RedisStorage.Session)
 	return &Services{
 		User:    userService,

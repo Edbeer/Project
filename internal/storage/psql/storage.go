@@ -1,6 +1,8 @@
 package psql
 
-import "github.com/jmoiron/sqlx"
+import (
+	"github.com/jmoiron/sqlx"
+)
 
 // Storage psql
 type Storage struct {

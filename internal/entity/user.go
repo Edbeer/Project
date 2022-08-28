@@ -23,13 +23,6 @@ type UserWithToken struct {
 	AccessToken string `json:"access_token"`
 }
 
-// Input User
-type InputUser struct {
-	Name     string
-	Email    string
-	Password string
-}
-
 // Compare user password and payload
 func (u *User) ComparePassword(password string) error {
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err != nil {
@@ -38,10 +31,23 @@ func (u *User) ComparePassword(password string) error {
 	return nil
 }
 
+func (u *User) HashPassword() error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	u.Password = string(hashedPassword)
+	return nil
+}
+
 // Prepare user struct for register
 func (u *User) PrepareCreate() error {
 	u.Email = strings.ToLower(strings.TrimSpace(u.Email))
 	u.Password = strings.TrimSpace(u.Password)
+	if err := u.HashPassword(); err != nil {
+		return err
+	}
 	return nil
 }
 

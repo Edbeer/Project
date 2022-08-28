@@ -6,7 +6,6 @@ import (
 
 type Deps struct {
 	Redis *redis.Client
-	Manager Manager
 }
 
 // Storage redis
@@ -16,6 +15,6 @@ type Storage struct {
 
 func NewStorage(deps Deps) *Storage {
 	return &Storage{
-		Session: newSessionStorage(deps.Redis, deps.Manager),
+		Session: newSessionStorage(deps.Redis),
 	}
 }

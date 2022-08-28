@@ -26,39 +26,31 @@ type UserPsql interface {
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*entity.User, error)
 }
 
-// PasswordHasher provides hashing logic to securely store passwords
-type PasswordHasher interface {
-	Hash(password string) string
-}
+// // PasswordHasher provides hashing logic to securely store passwords
+// type PasswordHasher interface {
+// 	Hash(password string) string
+// }
 
 // User service
 type UserService struct {
 	config       *config.Config
 	psql         UserPsql
-	hash         PasswordHasher
 	tokenManager Manager
 }
 
 // New user service constructor
-func NewUserService(config *config.Config, psql UserPsql, hash PasswordHasher, tokenManager Manager) *UserService {
+func newUserService(config *config.Config, psql UserPsql, tokenManager Manager) *UserService {
 	return &UserService{
 		config:       config,
 		psql:         psql,
-		hash:         hash,
 		tokenManager: tokenManager,
 	}
 }
 
 // Sign-up user
-func (u *UserService) SignUp(ctx context.Context, input *entity.InputUser) (*entity.UserWithToken, error) {
+func (u *UserService) SignUp(ctx context.Context, user *entity.User) (*entity.UserWithToken, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "UserService.SignUp")
 	defer span.Finish()
-	
-	user := &entity.User{
-		Name:     input.Name,
-		Password: u.hash.Hash(input.Password),
-		Email:    input.Email,
-	}
 
 	if err := user.PrepareCreate(); err != nil {
 		return nil, err

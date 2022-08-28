@@ -14,7 +14,6 @@ import (
 	"github.com/Edbeer/Project/internal/storage/psql"
 	"github.com/Edbeer/Project/internal/storage/redis"
 	"github.com/Edbeer/Project/internal/transport/rest/api"
-	"github.com/Edbeer/Project/pkg/hash"
 	"github.com/Edbeer/Project/pkg/jwt"
 	"github.com/Edbeer/Project/pkg/logger"
 	"github.com/go-redis/redis/v9"
@@ -43,7 +42,6 @@ func NewServer(config *config.Config, psql *sqlx.DB, redis *redis.Client, logger
 
 func (s *Server) Run() error {
 	// Services, Repos & API Handlers
-	hash := hash.NewSHA1Hasher()
 
 	tokenManager, err := jwt.NewManager(s.config.Server.JwtSecretKey)
 	if err != nil {
@@ -52,13 +50,11 @@ func (s *Server) Run() error {
 	psql := psql.NewStorage(s.psql)
 	redis := redisrepo.NewStorage(redisrepo.Deps{
 		Redis: s.redis,
-		Manager: tokenManager,
 	})
 	service := service.NewServices(service.Deps{
 		Config:       s.config,
 		PsqlStorage:  psql,
 		RedisStorage: redis,
-		Hash:         hash,
 		TokenManager: tokenManager,
 	})
 	handlers := api.NewHandlers(api.Deps{
