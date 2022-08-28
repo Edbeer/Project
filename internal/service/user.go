@@ -5,6 +5,7 @@ import (
 
 	"github.com/Edbeer/Project/pkg/utils"
 	"github.com/google/uuid"
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/Edbeer/Project/internal/entity"
 
@@ -50,6 +51,9 @@ func NewUserService(config *config.Config, psql UserPsql, hash PasswordHasher, t
 
 // Sign-up user
 func (u *UserService) SignUp(ctx context.Context, input *entity.InputUser) (*entity.UserWithToken, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "UserService.SignUp")
+	defer span.Finish()
+	
 	user := &entity.User{
 		Name:     input.Name,
 		Password: u.hash.Hash(input.Password),
@@ -87,6 +91,9 @@ func (u *UserService) SignUp(ctx context.Context, input *entity.InputUser) (*ent
 
 // Sign-in user
 func (u *UserService) SignIn(ctx context.Context, user *entity.User) (*entity.UserWithToken, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "UserService.SignIn")
+	defer span.Finish()
+	
 	foundUser, err := u.psql.FindUserByEmail(ctx, user)
 	if err != nil {
 		return nil, err
@@ -105,6 +112,9 @@ func (u *UserService) SignIn(ctx context.Context, user *entity.User) (*entity.Us
 
 // Get user by id
 func (u *UserService) GetUserByID(ctx context.Context, userId uuid.UUID) (*entity.UserWithToken, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "UserService.GetUserByID")
+	defer span.Finish()
+	
 	foundUser, err := u.psql.GetUserByID(ctx, userId)
 	if err != nil {
 		return nil, err

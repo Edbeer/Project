@@ -6,6 +6,7 @@ import (
 	"github.com/Edbeer/Project/internal/entity"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 )
 
@@ -21,6 +22,9 @@ func newUserStorage(psql *sqlx.DB) *UserStorage {
 
 // Create user
 func (r *UserStorage) Create(ctx context.Context, user *entity.User) (*entity.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "UserPsql.Create")
+	defer span.Finish()
+
 	u := &entity.User{}
 	query := `INSERT INTO users (name, email, password, created_at) 
 			VALUES ($1, $2, $3, now()) 
@@ -35,6 +39,9 @@ func (r *UserStorage) Create(ctx context.Context, user *entity.User) (*entity.Us
 
 // Find user by email
 func (r *UserStorage) FindUserByEmail(ctx context.Context, user *entity.User) (*entity.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "UserPsql.FindUserByEmail")
+	defer span.Finish()
+	
 	foundUser := &entity.User{}
 	query := `SELECT user_id, name, email, password, created_at
 			FROM users
@@ -47,6 +54,9 @@ func (r *UserStorage) FindUserByEmail(ctx context.Context, user *entity.User) (*
 
 // Get user by id
 func (r *UserStorage) GetUserByID(ctx context.Context, userID uuid.UUID) (*entity.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "UserPsql.GetUserByID")
+	defer span.Finish()
+	
 	u := &entity.User{}
 	query := `SELECT user_id, name, email, password, created_at
 		FROM users

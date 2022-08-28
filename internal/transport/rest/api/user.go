@@ -10,6 +10,7 @@ import (
 	"github.com/Edbeer/Project/pkg/httpe"
 	"github.com/Edbeer/Project/pkg/utils"
 	"github.com/google/uuid"
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/Edbeer/Project/config"
 	"github.com/labstack/echo/v4"
@@ -66,7 +67,8 @@ func (h *UserHandler) SignUp() echo.HandlerFunc {
 		Password string `json:"password,omitempty" db:"password" validate:"required,gte=6"`
 	}
 	return func(c echo.Context) error {
-		ctx := utils.GetRequestCtx(c)
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "UserHandler.SignUp")
+		defer span.Finish()
 
 		user := &inputUser{}
 		if err := utils.ReadRequest(c, user); err != nil {
@@ -103,7 +105,8 @@ func (h *UserHandler) SignIn() echo.HandlerFunc {
 		Password string `json:"password,omitempty" db:"password" validate:"required,gte=6"`
 	}
 	return func(c echo.Context) error {
-		ctx := utils.GetRequestCtx(c)
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "UserHandler.SignIn")
+		defer span.Finish()
 
 		login := &Login{}
 		if err := utils.ReadRequest(c, login); err != nil {
@@ -139,7 +142,8 @@ func (h *UserHandler) RefreshTokens() echo.HandlerFunc {
 		RefreshToken string `json:"refresh_token"`
 	}
 	return func(c echo.Context) error {
-		ctx := utils.GetRequestCtx(c)
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "UserHandler.RefreshTokens")
+		defer span.Finish()
 
 		token := &RefreshToken{}
 		if err := utils.ReadRequest(c, token); err != nil {
@@ -172,7 +176,8 @@ func (h *UserHandler) RefreshTokens() echo.HandlerFunc {
 
 func (u *UserHandler) SignOut() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		ctx := utils.GetRequestCtx(c)
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "UserHandler.SignOut")
+		defer span.Finish()
 
 		cookie, err := c.Cookie("jwt-token")
 		if err != nil {

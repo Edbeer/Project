@@ -19,6 +19,8 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
@@ -45,6 +47,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/labstack/echo/v4 v4.8.0
 	github.com/pkg/errors v0.9.1
+	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	go.uber.org/zap v1.22.0
 	golang.org/x/text v0.3.7 // indirect
 )

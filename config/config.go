@@ -15,6 +15,7 @@ type Config struct {
 	Session  Session  `yaml:"session"`
 	Cookie   Cookie   `yaml:"cookie"`
 	Logger   Logger   `yaml:"logger"`
+	Jaeger   Jaeger   `yaml:"jaeger"`
 }
 
 // Server config struct
@@ -73,6 +74,13 @@ type Logger struct {
 	DisableStacktrace bool   `yaml:"DisableStacktrace"`
 	Encoding          string `yaml:"Encoding"`
 	Level             string `yaml:"Level"`
+}
+
+// Jaeger config
+type Jaeger struct {
+	Host        string
+	ServiceName string
+	LogSpans    bool
 }
 
 var (

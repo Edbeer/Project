@@ -1,7 +1,26 @@
-FROM golang:latest
+FROM golang:1.19 as builder
 
-COPY ./ ./
+ENV config=docker
 
-RUN go build -o ./cmd/api/main.go
+WORKDIR /app
 
-CMD [ "./main" ]
+COPY ./ /app
+
+RUN go mod download
+
+
+
+FROM golang:1.19 as runner
+
+COPY --from=builder ./ ./
+
+RUN go install github.com/githubnemo/CompileDaemon@latest
+
+WORKDIR /app
+ENV config=docker
+
+EXPOSE 5000
+EXPOSE 5555
+EXPOSE 7070
+
+ENTRYPOINT CompileDaemon --build="go build cmd/api/main.go" --command=./main
