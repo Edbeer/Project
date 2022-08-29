@@ -26,11 +26,6 @@ type UserPsql interface {
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*entity.User, error)
 }
 
-// // PasswordHasher provides hashing logic to securely store passwords
-// type PasswordHasher interface {
-// 	Hash(password string) string
-// }
-
 // User service
 type UserService struct {
 	config       *config.Config

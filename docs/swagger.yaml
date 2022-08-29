@@ -1,0 +1,171 @@
+basePath: /api/
+definitions:
+  api.Login:
+    properties:
+      email:
+        maxLength: 60
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - password
+    type: object
+  api.RefreshToken:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  api.TokenResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  api.inputUser:
+    properties:
+      email:
+        type: string
+      name:
+        maxLength: 30
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - password
+    type: object
+  entity.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      name:
+        maxLength: 30
+        type: string
+      password:
+        minLength: 6
+        type: string
+      user_id:
+        type: string
+    required:
+    - password
+    type: object
+  httpe.RestError:
+    properties:
+      error:
+        type: string
+      status:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: This is an example of Auth
+  title: Auth App Api
+  version: "1.0"
+paths:
+  /user/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: user refresh tokens
+      parameters:
+      - description: sign up info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.RefreshToken'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.TokenResponse'
+      summary: Refresh Tokens
+      tags:
+      - User
+  /user/me:
+    get:
+      consumes:
+      - application/json
+      description: Get current user by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.User'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpe.RestError'
+      summary: Get user by id
+      tags:
+      - User
+  /user/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: login user, returns user and set session
+      parameters:
+      - description: sign up info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.User'
+      summary: Login new user
+      tags:
+      - User
+  /user/sign-out:
+    post:
+      consumes:
+      - application/json
+      description: logout user removing session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+      summary: Logout user
+      tags:
+      - User
+  /user/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: register new user, returns user and access token
+      parameters:
+      - description: sign up info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/api.inputUser'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entity.User'
+      summary: Register new user
+      tags:
+      - User
+swagger: "2.0"

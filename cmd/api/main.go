@@ -13,6 +13,12 @@ import (
 	jConfig "github.com/uber/jaeger-client-go/config"
 )
 
+// @title           Auth App Api
+// @version         1.0
+// @description     This is an example of Auth
+
+// @BasePath /api/
+
 func main() {
 	// init config
 	config := config.GetConfig()

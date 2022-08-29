@@ -18,7 +18,7 @@ import (
 
 // User service interface
 type UserService interface {
-	SignUp(ctx context.Context, input *entity.User) (*entity.UserWithToken, error)
+	SignUp(ctx context.Context, user *entity.User) (*entity.UserWithToken, error)
 	SignIn(ctx context.Context, user *entity.User) (*entity.UserWithToken, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*entity.UserWithToken, error)
 }
@@ -59,13 +59,22 @@ func NewUserHandler(config *config.Config, user UserService, session SessionServ
 	}
 }
 
-// SignUp
+type inputUser struct {
+	Name     string `json:"name" validate:"required_with,lte=30"`
+	Email    string `json:"email" validate:"omitempty,email"`
+	Password string `json:"password,omitempty" validate:"required,gte=6"`
+}
+
+// SignUp godoc
+// @Summary Register new user
+// @Description register new user, returns user and access token
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param input body inputUser true "sign up info"
+// @Success 201 {object} entity.User
+// @Router /user/sign-up [post]
 func (h *UserHandler) SignUp() echo.HandlerFunc {
-	type inputUser struct {
-		Name     string `json:"name" db:"name" validate:"required_with,lte=30"`
-		Email    string `json:"email" db:"email" validate:"omitempty,email"`
-		Password string `json:"password,omitempty" db:"password" validate:"required,gte=6"`
-	}
 	return func(c echo.Context) error {
 		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "UserHandler.SignUp")
 		defer span.Finish()
@@ -84,7 +93,6 @@ func (h *UserHandler) SignUp() echo.HandlerFunc {
 			return c.JSON(httpe.ParseErrors(err).Status(), httpe.ParseErrors(err))
 		}
 
-		// TODO 
 		refreshToken, err := h.session.CreateSession(ctx, &entity.Session{
 			UserID: createdUser.User.ID,
 		}, h.config.Cookie.MaxAge)
@@ -98,12 +106,21 @@ func (h *UserHandler) SignUp() echo.HandlerFunc {
 	}
 }
 
-// SignIn
+type Login struct {
+	Email    string `json:"email" validate:"omitempty,lte=60,email"`
+	Password string `json:"password,omitempty" validate:"required,gte=6"`
+}
+
+// SignIn godoc
+// @Summary Login new user
+// @Description login user, returns user and set session
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param input body Login true "sign up info"
+// @Success 200 {object} entity.User
+// @Router /user/sign-in [post]
 func (h *UserHandler) SignIn() echo.HandlerFunc {
-	type Login struct {
-		Email    string `json:"email" db:"email" validate:"omitempty,lte=60,email"`
-		Password string `json:"password,omitempty" db:"password" validate:"required,gte=6"`
-	}
 	return func(c echo.Context) error {
 		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "UserHandler.SignIn")
 		defer span.Finish()
@@ -132,15 +149,24 @@ func (h *UserHandler) SignIn() echo.HandlerFunc {
 	}
 }
 
-// Update tokens
+type RefreshToken struct {
+	Token string `json:"refresh_token" binding:"required"`
+}
+
+type TokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
+// @Summary Refresh Tokens
+// @Tags User
+// @Description user refresh tokens
+// @Accept  json
+// @Produce  json
+// @Param input body RefreshToken true "sign up info"
+// @Success 200 {object} TokenResponse
+// @Router /user/auth/refresh [post]
 func (h *UserHandler) RefreshTokens() echo.HandlerFunc {
-	type RefreshToken struct {
-		Token string `json:"refresh_token" redis:"refresh_token" binding:"required"`
-	}
-	type tokenResponse struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-	}
 	return func(c echo.Context) error {
 		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "UserHandler.RefreshTokens")
 		defer span.Finish()
@@ -167,13 +193,21 @@ func (h *UserHandler) RefreshTokens() echo.HandlerFunc {
 		}
 
 		c.SetCookie(utils.ConfigureJWTCookie(h.config, refreshToken))
-		return c.JSON(http.StatusOK, tokenResponse{
+		return c.JSON(http.StatusOK, TokenResponse{
 			AccessToken: user.AccessToken,
 			RefreshToken: refreshToken,
 		})
 	}
 }
 
+// SignOut godoc
+// @Summary Logout user
+// @Description logout user removing session
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Success 200 {string} string	"ok"
+// @Router /user/sign-out [post]
 func (u *UserHandler) SignOut() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "UserHandler.SignOut")
@@ -195,6 +229,15 @@ func (u *UserHandler) SignOut() echo.HandlerFunc {
 	}
 }
 
+// GetMe godoc
+// @Summary Get user by id
+// @Description Get current user by id
+// @Tags User
+// @Accept json
+// @Produce json
+// @Success 200 {object} entity.User
+// @Failure 500 {object} httpe.RestError
+// @Router /user/me [get]
 func (u *UserHandler) GetMe() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user, ok := c.Get("user").(*entity.User)

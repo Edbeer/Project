@@ -6,6 +6,8 @@ import (
 	"github.com/Edbeer/Project/pkg/logger"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
+	"github.com/Edbeer/Project/docs"
 )
 
 // Dependencies
@@ -58,6 +60,9 @@ func (h *Handlers) Init(e *echo.Echo, logger logger.Logger) error {
 		[]string{"*"},
 		logger,
 	)
+	docs.SwaggerInfo.Title = "Auth JWT example restapi"
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
+
 	h.initApi(e, mw)
 
 	return nil
